@@ -26,8 +26,8 @@
 
 <h3 align="left">🤖 AI / LLM</h3>
 <div align="left">
-  <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/ChatGPT-74AA9C?style=for-the-badge&labelColor=74AA9C" />&nbsp
+  <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />&nbsp
   <img src="https://img.shields.io/badge/LM%20Studio-5C33F6?style=for-the-badge&logo=lmstudio&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Ollama-30363D?style=for-the-badge&logo=ollama&logoColor=white" />&nbsp
@@ -49,8 +49,8 @@
   <img src="https://img.shields.io/badge/git-F05033?style=for-the-badge&logo=git&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/github-30363D?style=for-the-badge&logo=github&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" />&nbsp
-  <img src="https://img.shields.io/badge/Claude%20Code-D97757?style=for-the-badge&logo=claude&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Codex-412991?style=for-the-badge&labelColor=412991" />&nbsp
+  <img src="https://img.shields.io/badge/Claude%20Code-D97757?style=for-the-badge&logo=claude&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Cursor-30363D?style=for-the-badge&logo=cursor&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Xcode-147EFB?style=for-the-badge&logo=xcode&logoColor=white" />&nbsp
   <img src="https://img.shields.io/badge/Notion-F3F3F3?style=for-the-badge&logo=notion&logoColor=black" />&nbsp
