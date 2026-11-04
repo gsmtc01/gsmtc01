@@ -21,7 +21,15 @@ import logo3d
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets" / "profile" / "hero.svg"
-ICONS = json.loads((Path(__file__).parent / "stack_icons.json").read_text())["icons"]
+_ICON_DATA = json.loads((Path(__file__).parent / "stack_icons.json").read_text())
+ICONS = _ICON_DATA["icons"]
+EVENODD = set(_ICON_DATA.get("evenodd", []))
+# icons drawn with a gradient instead of a flat brand colour (official Codex mark)
+GRADIENTS = {
+    "codex": '<linearGradient id="g-codex" x1="0" y1="0" x2="0" y2="1">'
+             '<stop stop-color="#b1a7ff"/><stop offset=".5" stop-color="#7a9dff"/>'
+             '<stop offset="1" stop-color="#3941ff"/></linearGradient>',
+}
 
 W = 846
 ADV = 0.6  # IBM Plex Mono advance width in em
@@ -57,10 +65,9 @@ STACK = [
         ("OWASP", "owasp", "30363D"),
     ]),
     ("AI / LLM", [
-        ("ChatGPT", None, "74AA9C"), ("Claude", "claude", "D97757"),
-        ("Hugging Face", "huggingface", "FFD21E"), ("LM Studio", "lmstudio", "5C33F6"),
-        ("Ollama", "ollama", "30363D"),
-        ("vLLM", "vllm", "30A2FF"), ("MCP", "modelcontextprotocol", "30363D"),
+        ("Claude", "claude", "D97757"), ("ChatGPT", "openai", "74AA9C"),
+        ("Hugging Face", "huggingface", "FFD21E"), ("Ollama", "ollama", "30363D"),
+        ("LM Studio", "lmstudio", "5C33F6"), ("vLLM", "vllm", "30A2FF"), ("MCP", "modelcontextprotocol", "30363D"),
         ("WebGPU", "webgpu", "005A9C"),
     ]),
     ("Data", [
@@ -74,8 +81,8 @@ STACK = [
         ("WebAssembly", "webassembly", "654FF0"),
     ]),
     ("Tools", [
-        ("GitHub Actions", "githubactions", "2088FF"), ("Codex", None, "412991"),
-        ("Claude Code", "claude", "D97757"), ("Cursor", "cursor", "30363D"),
+        ("GitHub Actions", "githubactions", "2088FF"), ("Claude Code", "claudecode", "D97757"),
+        ("Codex", "codex", "412991"), ("Cursor", "cursor", "30363D"),
         ("Xcode", "xcode", "147EFB"),
     ]),
 ]
@@ -182,7 +189,8 @@ def stack_block(x0, y0, right, delay0, lh=21.0, gap=7.0):
             c = lift(col)
             if slug:
                 icon = (f'<path transform="translate({x:.1f} {y - 10:.1f}) scale({11 / 24:.4f})" '
-                        f'fill="{c}" d="{ICONS[slug]}"/>')
+                        + ('fill-rule="evenodd" ' if slug in EVENODD else "")
+                        + f'fill="{"url(#g-" + slug + ")" if slug in GRADIENTS else c}" d="{ICONS[slug]}"/>')
             else:
                 icon = f'<rect x="{x + 1.5:.1f}" y="{y - 8.5:.1f}" width="8" height="8" rx="2" fill="{c}"/>'
             line_items.append(icon + f'<text x="{x + 15:.1f}" y="{y:.1f}" font-size="{fs}" fill="{BODY}">{esc(name)}</text>')
@@ -304,7 +312,7 @@ def build(font_medium, font_bold):
     label_w = len(HANDLE) * 13 * ADV + 14
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{esc(aria)}">'
-        f"<title>{HANDLE}</title><defs><clipPath id=\"win\"><rect x=\"5\" y=\"0\" width=\"836\" height=\"{H - 4}\" rx=\"12\"/></clipPath></defs>"
+        f"<title>{HANDLE}</title><defs><clipPath id=\"win\"><rect x=\"5\" y=\"0\" width=\"836\" height=\"{H - 4}\" rx=\"12\"/></clipPath>" + "".join(GRADIENTS.values()) + "</defs>"
         f"<style>{css}</style>"
         f'<rect x="5" y="0" width="836" height="{H - 4}" rx="12" fill="{BG}"/>'
         f'<g clip-path="url(#win)">'
