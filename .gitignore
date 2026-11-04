@@ -4,3 +4,7 @@ preview-dark.html
 
 # 참고용 예시 파일
 예.md
+
+# 빌드 부산물
+__pycache__/
+.DS_Store
