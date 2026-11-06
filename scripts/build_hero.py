@@ -33,6 +33,51 @@ GRADIENTS = {
              '<stop offset="1" stop-color="#3941ff"/></linearGradient>',
 }
 
+# Window controls in the macOS 27 Liquid Glass style, sampled from a real
+# macOS 27.2 title bar: the body is darkest about 40% down and brightens
+# toward the bottom, light gathers in a soft glow near the lower edge, and a
+# thin bright rim shows at the top and bottom but fades out at the sides.
+# (name, centre x, top, darkest, bottom, rim)
+TRAFFIC = [
+    ("close", 24, "#f86458", "#f45145", "#ef6962", "#ffd3cb"),
+    ("min", 43, "#fab500", "#fcb400", "#fece32", "#fff27a"),
+    ("zoom", 62, "#3ec208", "#00bc00", "#52c33c", "#bdf8a4"),
+]
+TL_R = 6.0
+TL_CY = 15
+
+
+def traffic_defs():
+    out = []
+    for name, _, top, mid, bottom, rim in TRAFFIC:
+        out.append(
+            f'<linearGradient id="tl-{name}" x1="0" y1="0" x2="0" y2="1">'
+            f'<stop stop-color="{top}"/><stop offset=".4" stop-color="{mid}"/>'
+            f'<stop offset="1" stop-color="{bottom}"/></linearGradient>'
+            f'<radialGradient id="tl-{name}-glow" cx=".5" cy=".86" r=".5">'
+            f'<stop stop-color="{rim}" stop-opacity=".55"/>'
+            f'<stop offset="1" stop-color="{rim}" stop-opacity="0"/></radialGradient>'
+            f'<linearGradient id="tl-{name}-rim" x1="0" y1="0" x2="0" y2="1">'
+            f'<stop stop-color="{rim}" stop-opacity=".95"/><stop offset=".28" stop-color="{rim}" stop-opacity="0"/>'
+            f'<stop offset=".72" stop-color="{rim}" stop-opacity="0"/>'
+            f'<stop offset="1" stop-color="{rim}" stop-opacity=".85"/></linearGradient>'
+        )
+    return "".join(out)
+
+
+def traffic_lights():
+    out = []
+    for name, cx, *_ in TRAFFIC:
+        out.append(
+            f'<circle cx="{cx}" cy="{TL_CY}" r="{TL_R}" fill="url(#tl-{name})"/>'
+            f'<circle cx="{cx}" cy="{TL_CY}" r="{TL_R}" fill="url(#tl-{name}-glow)"/>'
+            f'<circle cx="{cx}" cy="{TL_CY}" r="{TL_R - 0.35}" fill="none" stroke="url(#tl-{name}-rim)" stroke-width=".7"/>'
+            # hairline so the glass edge still reads on the light title bar
+            f'<circle cx="{cx}" cy="{TL_CY}" r="{TL_R + 0.25}" fill="none" stroke="#000" stroke-opacity=".07" stroke-width=".5"/>'
+        )
+    return "".join(out)
+
+
 W = 846
 ADV = 0.6  # IBM Plex Mono advance width in em
 
@@ -346,14 +391,13 @@ def build(font_medium, font_bold):
     label_w = len(HANDLE) * 13 * ADV + 14
     svg = (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{esc(aria)}">'
-        f"<title>{HANDLE}</title><defs><clipPath id=\"win\"><rect x=\"5\" y=\"0\" width=\"836\" height=\"{H - 4}\" rx=\"12\"/></clipPath>" + "".join(GRADIENTS.values()) + "</defs>"
+        f"<title>{HANDLE}</title><defs><clipPath id=\"win\"><rect x=\"5\" y=\"0\" width=\"836\" height=\"{H - 4}\" rx=\"12\"/></clipPath>" + "".join(GRADIENTS.values()) + traffic_defs() + "</defs>"
         f"<style>{css}</style>"
         f'<rect x="5" y="0" width="836" height="{H - 4}" rx="12" fill="{BG}" stroke="{LINE}"/>'
         f'<g clip-path="url(#win)">'
         # title bar
         f'<g class="fd"><path d="M5 12a12 12 0 0 1 12-12h812a12 12 0 0 1 12 12v18H5z" fill="{BAR}"/>'
-        f'<circle cx="25" cy="15" r="5.5" fill="#ff5f57"/><circle cx="43" cy="15" r="5.5" fill="#febc2e"/><circle cx="61" cy="15" r="5.5" fill="#28c840"/>'
-        f'<text x="423" y="19.5" font-size="12" fill="{DIM}" text-anchor="middle">~/{HANDLE}</text></g>'
+        + traffic_lights() + "</g>"
         + glow
         # panel
         + f'<rect x="{panel[0]}" y="{panel[1]}" width="{panel[2]}" height="{panel[3]}" rx="8" fill="none" stroke="{LINE}" stroke-width="1.2" pathLength="1" class="dr"/>'
