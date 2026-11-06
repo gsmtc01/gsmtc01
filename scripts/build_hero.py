@@ -7,6 +7,8 @@ Usage:
 The fonts (IBM Plex Mono, SIL OFL 1.1) are subset to printable ASCII and
 embedded as WOFF so every viewer gets the same monospace metrics.
 Icon paths in stack_icons.json come from simple-icons (CC0-1.0).
+The SVG follows the embedding page's color scheme, or the browser preference
+when viewed directly, without JavaScript or separate image files.
 """
 import argparse
 import base64
@@ -34,14 +36,28 @@ GRADIENTS = {
 W = 846
 ADV = 0.6  # IBM Plex Mono advance width in em
 
-# palette
-BG = "#0b0e13"
-BAR = "#121720"
-LINE = "#26303c"
-HEAD = "#e8eef4"
-BODY = "#9aa6b2"
-DIM = "#5d6976"
-ACCENT = "#2aa9f2"
+# Theme variables also cover the typing masks, so they match the background.
+BG = "var(--bg)"
+BAR = "var(--bar)"
+LINE = "var(--line)"
+HEAD = "var(--head)"
+BODY = "var(--body)"
+DIM = "var(--dim)"
+ACCENT = "var(--accent)"
+PALETTES = {
+    "light": {
+        "bg": "#ffffff", "bar": "#f6f8fa", "line": "#d1d9e0",
+        "head": "#1f2328", "body": "#424a53", "dim": "#656d76",
+        "accent": "#0969da", "prompt-line": "#afb8c1",
+        "glow-center": ".12", "glow-mid": ".055",
+    },
+    "dark": {
+        "bg": "#0b0e13", "bar": "#121720", "line": "#26303c",
+        "head": "#e8eef4", "body": "#9aa6b2", "dim": "#8b98a6",
+        "accent": "#2aa9f2", "prompt-line": "#3a4655",
+        "glow-center": ".30", "glow-mid": ".14",
+    },
+}
 # deep navy -> logo blue -> sky blue, taken from the logo artwork (no white)
 LOGO = {1: "#0b3d7e", 2: "#0e55a4", 3: "#136cc4", 4: "#1a88dc", 5: "#27a6ee", 6: "#4cc4f8"}
 
@@ -134,6 +150,19 @@ def lift(hexcol):
     return "#%02x%02x%02x" % (round(r * 255), round(g * 255), round(b * 255))
 
 
+def theme_css():
+    """An embedded SVG inherits the host element's color-scheme preference."""
+    rules = {}
+    for theme, palette in PALETTES.items():
+        values = dict(palette)
+        for _, items in STACK:
+            for _, slug, col in items:
+                if slug and slug not in GRADIENTS:
+                    values[f"icon-{slug}"] = lift(col) if theme == "dark" else "#" + col.lower()
+        rules[theme] = ":root{" + ";".join(f"--{key}:{value}" for key, value in values.items()) + "}"
+    return rules["light"] + "@media (prefers-color-scheme:dark){" + rules["dark"] + "}"
+
+
 # ---------------------------------------------------------------- logo frames
 
 def logo_frames(ox, oy):
@@ -186,7 +215,7 @@ def stack_block(x0, y0, right, delay0, lh=21.0, gap=7.0):
                 d += 0.07
                 line_items, x, y = [], x0 + label_w, y + lh
                 nrows += 1
-            c = lift(col)
+            c = f"var(--icon-{slug})" if slug else "#" + col.lower()
             if slug:
                 icon = (f'<path transform="translate({x:.1f} {y - 10:.1f}) scale({11 / 24:.4f})" '
                         + ('fill-rule="evenodd" ' if slug in EVENODD else "")
@@ -277,7 +306,8 @@ def build(font_medium, font_bold):
     css = (
         f"@font-face{{font-family:PM;font-weight:500;src:url(data:font/woff;base64,{fm}) format('woff')}}"
         f"@font-face{{font-family:PM;font-weight:700;src:url(data:font/woff;base64,{fb}) format('woff')}}"
-        "text{font-family:PM,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:500;white-space:pre}"
+        + theme_css()
+        + "text{font-family:PM,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:500;white-space:pre}"
         + "".join(f".l{k}{{fill:{c}}}" for k, c in LOGO.items())
         + f".f{{font-size:{FS_LOGO}px;opacity:0;animation:fr {LOOP_S}s step-end infinite}}.f0{{opacity:1}}"
         f"@keyframes fr{{0%{{opacity:1}}{100 / N_FRAMES:.3f}%{{opacity:0}}100%{{opacity:0}}}}"
@@ -299,8 +329,8 @@ def build(font_medium, font_bold):
 
     glow = (
         f'<radialGradient id="glow" cx="{logo_cx}" cy="{logo_cy}" r="150" gradientUnits="userSpaceOnUse">'
-        '<stop offset="0" stop-color="#0f86d2" stop-opacity=".30"/>'
-        '<stop offset=".45" stop-color="#07a5ec" stop-opacity=".14"/>'
+        '<stop offset="0" stop-color="#0f86d2" stop-opacity="var(--glow-center)"/>'
+        '<stop offset=".45" stop-color="#07a5ec" stop-opacity="var(--glow-mid)"/>'
         '<stop offset="1" stop-color="#03b2f0" stop-opacity="0"/></radialGradient>'
         f'<g class="gw" style="transform-origin:{logo_cx}px {logo_cy}px">'
         f'<circle cx="{logo_cx}" cy="{logo_cy}" r="150" fill="url(#glow)"/></g>'
@@ -314,7 +344,7 @@ def build(font_medium, font_bold):
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-label="{esc(aria)}">'
         f"<title>{HANDLE}</title><defs><clipPath id=\"win\"><rect x=\"5\" y=\"0\" width=\"836\" height=\"{H - 4}\" rx=\"12\"/></clipPath>" + "".join(GRADIENTS.values()) + "</defs>"
         f"<style>{css}</style>"
-        f'<rect x="5" y="0" width="836" height="{H - 4}" rx="12" fill="{BG}"/>'
+        f'<rect x="5" y="0" width="836" height="{H - 4}" rx="12" fill="{BG}" stroke="{LINE}"/>'
         f'<g clip-path="url(#win)">'
         # title bar
         f'<g class="fd"><path d="M5 12a12 12 0 0 1 12-12h812a12 12 0 0 1 12 12v18H5z" fill="{BAR}"/>'
@@ -333,7 +363,7 @@ def build(font_medium, font_bold):
         + stack_svg
         # prompt
         + f'<g class="in" style="animation-delay:{d_end + 0.1:.2f}s">'
-        f'<rect x="{prompt_box[0]}" y="{prompt_box[1]}" width="{prompt_box[2]}" height="{prompt_box[3]}" rx="6" fill="none" stroke="#3a4655" stroke-width="1.2"/>'
+        f'<rect x="{prompt_box[0]}" y="{prompt_box[1]}" width="{prompt_box[2]}" height="{prompt_box[3]}" rx="6" fill="none" stroke="var(--prompt-line)" stroke-width="1.2"/>'
         f'<text x="38" y="{py}" font-size="13.5" fill="{ACCENT}">&gt;</text>{type_svg}</g>'
         f'<g class="in" style="animation-delay:{d_end + 0.2:.2f}s"><text x="38" y="{H - 14}" font-size="12" fill="{DIM}">? for shortcuts</text>'
         f'<text x="808" y="{H - 14}" font-size="12" fill="{DIM}" text-anchor="end">github.com/{HANDLE}</text></g>'
