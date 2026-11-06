@@ -111,7 +111,7 @@ COMMANDS = [
 ]
 
 # logo animation
-N_FRAMES = 108
+N_FRAMES = 144
 LOOP_S = 12.0
 COLS, ROWS = 52, 30
 FS_LOGO = 9.6
