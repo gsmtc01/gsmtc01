@@ -108,19 +108,9 @@ def tumble(t):
 
 # palette levels: 1 deep navy .. 6 sky blue (no white)
 LEVELS = 6
-# sub-samples per cell side, and the cell coverage above which a cell is solid
+# sub-samples per cell side; a cell's shade is the mean of its sub-samples,
+# which keeps glyphs steadier from frame to frame than a single sample
 SS = 3
-SOLID = 0.6
-
-
-def _dilate(m):
-    p = np.pad(m, 1)
-    return np.max([p[i:i + m.shape[0], j:j + m.shape[1]] for i in range(3) for j in range(3)], axis=0)
-
-
-def _erode(m):
-    p = np.pad(m, 1, constant_values=True)
-    return np.min([p[i:i + m.shape[0], j:j + m.shape[1]] for i in range(3) for j in range(3)], axis=0)
 
 
 def frame(t, cols=52, rows=27, scale=128.0, cw=5.76, ch=9.6, angles=None):
@@ -176,13 +166,10 @@ def frame(t, cols=52, rows=27, scale=128.0, cw=5.76, ch=9.6, angles=None):
         a = np.zeros(sh * sw)
         a[cells] = val[win]
         sub[name] = a.reshape(sh, sw)
-    # close pinholes between surface samples so solid areas count as covered
-    cover = _erode(_dilate(hit))
 
     def pool(a):
         return a.reshape(rows, SS, cols, SS).sum(axis=(1, 3))
 
-    cov = pool(cover.astype(float)) / (SS * SS)
     nhit = pool(hit.astype(float))
     L, G, F = (pool(sub[k]) / np.maximum(nhit, 1) for k in ("L", "G", "F"))
     out = []
@@ -193,11 +180,9 @@ def frame(t, cols=52, rows=27, scale=128.0, cw=5.76, ch=9.6, angles=None):
                 row.append((" ", 0))
                 continue
             v = min(1.0, L[y, x] + 0.18 * F[y, x])
-            # dense glyphs inside the body, lighter ones where a cell is only
-            # partly covered, so the silhouette and the thin neck look smooth
+            # dense glyphs only: light edge glyphs (. , :) blink in and out as
+            # the logo turns, so the silhouette stays a solid body
             d = 3 + min(len(RAMP) - 4, int(v * (len(RAMP) - 3)))
-            if cov[y, x] < SOLID:
-                d = max(1, min(d, 1 + round((d - 1) * cov[y, x] / SOLID)))
             tone = 0.55 * L[y, x] + 0.30 * G[y, x] + 0.25 * F[y, x]
             lvl = 1 + max(0, min(LEVELS - 1, int((tone - 0.12) / 0.72 * LEVELS)))
             row.append((RAMP[d], lvl))

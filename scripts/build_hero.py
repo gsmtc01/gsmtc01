@@ -192,7 +192,9 @@ def logo_frames(ox, oy):
             rows.append(f'<tspan x="{ox + start * cw:.1f}" y="{oy + r * FS_LOGO:.1f}">{inner}</tspan>')
         cls = "f f0" if i == 0 else "f"
         delay = -LOOP_S + i * LOOP_S / N_FRAMES
-        out.append(f'<text class="{cls}" style="animation-delay:{delay:.3f}s">{"".join(rows)}</text>')
+        # 5 decimals: with 3, rounding left sub-millisecond gaps between frames
+        # in which no frame was visible, and the logo blinked
+        out.append(f'<text class="{cls}" style="animation-delay:{delay:.5f}s">{"".join(rows)}</text>')
     return "".join(out)
 
 
@@ -310,7 +312,9 @@ def build(font_medium, font_bold):
         + "text{font-family:PM,ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:500;white-space:pre}"
         + "".join(f".l{k}{{fill:{c}}}" for k, c in LOGO.items())
         + f".f{{font-size:{FS_LOGO}px;opacity:0;animation:fr {LOOP_S}s step-end infinite}}.f0{{opacity:1}}"
-        f"@keyframes fr{{0%{{opacity:1}}{100 / N_FRAMES:.3f}%{{opacity:0}}100%{{opacity:0}}}}"
+        # each frame stays up a hair longer than the frame spacing (about 8
+        # microseconds), so consecutive frames always meet and never leave a gap
+        f"@keyframes fr{{0%{{opacity:1}}{100 / N_FRAMES * 1.0001:.5f}%{{opacity:0}}100%{{opacity:0}}}}"
         ".in{animation:in .55s cubic-bezier(.2,.8,.2,1) both}"
         "@keyframes in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}"
         ".fd{animation:fd .5s ease-out both}@keyframes fd{from{opacity:0}to{opacity:1}}"
